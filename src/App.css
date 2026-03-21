@@ -1,21 +1,458 @@
 h1 {
-    font-family: Courier, monospace;
-    font-size: 48px;
-    font-weight: bold;
+  font-size: 48px;
+  font-weight: bold;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
-  overflow: hidden;      /* disables scrolling */
+  overflow: hidden;
+  /* disables scrolling */
   height: 100%;
 }
 
 ::-webkit-scrollbar {
-  display: none;         /* hides scrollbar (Chrome, Edge, Safari) */
+  display: none;
+  /* hides scrollbar (Chrome, Edge, Safari) */
 }
 
 body {
-  -ms-overflow-style: none;  /* IE/Edge */
-  scrollbar-width: none;     /* Firefox */
+  -ms-overflow-style: none;
+  /* IE/Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+.btn-options {
+  border: 2px solid #6b3cc6;
+}
+
+.btn-start {
+  border: 2px solid #2eedda;
+}
+
+.btn-skins {
+  border: 2px solid #ce3078;
+}
+
+.mainmenu-btns {
+  display: flex;
+  gap: 80px;
+}
+
+.titleName {
+  font-size: 72pt;
+  font-family: "Play", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+
+  @media only screen and (hover: none) {
+    font-size: small;
+  }
+}
+
+/* container */
+.mainmenu-container {
+  height: 100vh;
+  background: #041123;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  cursor: none;
+}
+
+/* buttons wrapper */
+.mainmenu-btns {
+  display: flex;
+  gap: 80px;
+}
+
+/* base button */
+.menu-btn {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 20pt;
+  font-family: Arial;
+  color: white;
+  overflow: hidden;
+  transform: scale(1) rotate(20deg);
+  transition: all 0.2s ease;
+}
+
+/* text inside */
+.btn-text {
+  position: relative;
+  z-index: 1;
+  font-weight: bold;
+  transform: rotate(-20deg);
+  transition: all 0.2s ease;
+}
+
+/* hover state */
+.menu-btn.hovered {
+  transform: scale(1.08) rotate(0deg);
+  color: black;
+}
+
+.menu-btn.hovered .btn-text {
+  transform: rotate(0deg);
+}
+
+/* dynamic background (uses border color) */
+.btn-options.hovered {
+  background-color: #6b3cc6;
+}
+
+.btn-start.hovered {
+  background-color: #2eedda;
+}
+
+.btn-skins.hovered {
+  background-color: #ce3078;
+}
+
+/* borders */
+.btn-options {
+  border: 4px solid #6b3cc6;
+}
+
+.btn-start {
+  border: 4px solid #2eedda;
+}
+
+.btn-skins {
+  border: 4px solid #ce3078;
+}
+
+/* cursor */
+.cursor {
+  position: fixed;
+  background-color: white;
+  left: 0;
+  top: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 999;
+}
+
+/* title */
+.titleName {
+  font-size: 72pt;
+  font-family: "Play", sans-serif;
+  font-weight: 700;
+}
+
+/* 📱 MOBILE */
+@media (max-width: 768px), (hover: none) {
+  .mainmenu-btns {
+    flex-direction: column;
+    gap: 30px;
+
+    margin-bottom: 110px;
+  }
+
+  .menu-btn {
+    width: 120px;
+    height: 120px;
+    font-size: 14pt;
+  }
+
+  .titleName {
+    font-size: 28pt;
+    text-align: center;
+  }
+}
+
+/* container */
+.options-container {
+  height: 100vh;
+  background: linear-gradient(110deg, #7A42F4 70%, #080C26 70%);
+  color: white;
+  font-family: Arial;
+  overflow: hidden;
+  cursor: none;
+  position: relative;
+}
+
+/* title */
+.options-title {
+  font-size: 72px;
+  padding: 60px 80px;
+  margin: 0;
+}
+
+/* content */
+.options-content {
+  padding-left: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 60px;
+}
+
+/* sound row */
+.sound-row {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+
+.sound-label {
+  font-size: 48px;
+}
+
+/* blocks */
+.sound-blocks {
+  display: flex;
+  gap: 12px;
+}
+
+.sound-block {
+  width: 40px;
+  height: 40px;
+  border: 4px solid white;
+  position: relative;
+}
+
+.sound-block.active {
+  background: white;
+}
+
+/* fill */
+.block-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 0%;
+  background: rgba(255,255,255,0.5);
+}
+
+/* credits */
+.credits {
+  font-size: 48px;
+  width: fit-content;
+  position: relative;
+}
+
+.credits-fill {
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  height: 6px;
+  width: 0%;
+  background: white;
+}
+
+/* back button */
+.back-btn {
+  position: absolute;
+  bottom: 5vh;      /* responsive instead of px */
+  right: 5vw;
+
+  width: 120px;
+  height: 120px;
+
+  border: 5px solid #1E5BFF;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  transform: rotate(-15deg);
+  transition: 0.2s;
+}
+
+.back-btn.hovered {
+  transform: rotate(0deg) scale(1.1);
+}
+
+.back-fill {
+  position: absolute;
+  inset: 0;
+  background: #1E5BFF;
+  opacity: 0;
+}
+
+.back-text {
+  position: relative;
+  z-index: 1;
+  font-weight: bold;
+  font-size: 24px;
+}
+
+/* cursor */
+.cursor {
+  position: fixed;
+  width: 24px;
+  height: 24px;
+  background: white;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 999;
+}
+
+/* 📱 MOBILE FIX */
+@media (max-width: 768px) {
+  .options-title {
+    font-size: 36px;
+    padding: 20px;
+  }
+
+  .options-content {
+    padding: 20px;
+    gap: 30px;
+  }
+
+  .sound-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  
+  .sound-blocks {
+    flex-wrap: wrap;
+  }
+
+  .sound-label {
+    font-size: 28px;
+  }
+
+  .sound-block {
+    width: 32px;
+    height: 32px;
+    border-width: 2px;
+  }
+
+  .credits {
+    font-size: 28px;
+  }
+
+  .back-btn {
+    width: 70px;
+    height: 70px;
+    bottom: 20vh;
+    right: 10vw;
+  }
+
+  .back-text {
+    font-size: 16px;
+  }
+}
+
+/* container */
+.credits-container {
+  height: 100vh;
+  background: #7A42F4;
+  color: white;
+  font-family: Arial;
+  overflow: hidden;
+  cursor: none;
+  position: relative;
+}
+
+/* title */
+.credits-title {
+  font-size: 72px;
+  padding: 60px 80px;
+  margin: 0;
+}
+
+/* content */
+.credits-content {
+  padding-left: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+/* text */
+.credit-item {
+  font-size: 48px;
+  font-weight: bold;
+}
+
+/* back button (FIXED → no clipping) */
+.back-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+
+  width: 100px;
+  height: 100px;
+
+  border: 5px solid #1E5BFF;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: #1E5BFF;
+
+  transform: rotate(-15deg);
+  transition: 0.2s;
+
+  z-index: 1000;
+}
+
+.back-btn.hovered {
+  transform: rotate(0deg) scale(1.1);
+}
+
+.back-fill {
+  position: absolute;
+  inset: 0;
+  background: #1E5BFF;
+  opacity: 1;
+}
+
+.back-text {
+  position: relative;
+  z-index: 1;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+/* cursor */
+.cursor {
+  position: fixed;
+  width: 24px;
+  height: 24px;
+  background: white;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 999;
+}
+
+/* 📱 MOBILE */
+@media (max-width: 768px) {
+  .credits-title {
+    font-size: 36px;
+    padding: 20px;
+  }
+
+  .credits-content {
+    padding: 20px;
+    gap: 20px;
+  }
+
+  .credit-item {
+    font-size: 22px;
+  }
+
+  .back-btn {
+    width: 70px;
+    height: 70px;
+    bottom: 35px;
+    right: 35px;
+  }
+
+  .back-text {
+    font-size: 14px;
+  }
 }

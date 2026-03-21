@@ -223,25 +223,25 @@ export default function Game() {
   };
 
   return (
-    <div style={{ textAlign: "center", background: "#1a1a1a", minHeight: "100vh", color: "white", cursor: "none", overflow: "hidden", fontFamily: "Arial" }}>
+    <div style={{ textAlign: "center", background: "#031021", minHeight: "100vh", color: "white", cursor: "none", overflow: "hidden", fontFamily: "Arial" }}>
       <h2 style={{ margin: 0, padding: "20px" }}>Score: {score}</h2>
       
       <div style={{ position: "relative", display: "inline-block" }}>
-        <canvas ref={canvasRef} width="1080" height="620" style={{ background: "#000", borderRadius: 12, border: "2px solid #333", display: "block" }} />
+        <canvas ref={canvasRef} width="1080" height="620" style={{ background: "#031021", borderRadius: 0, border: "6px solid #272e38", display: "block" }} />
         
         {isGameOver && (
-          <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0,0,0,0.85)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", borderRadius: 12, zIndex: 10 }}>
+          <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0,0,0,0.85)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", borderRadius: 0, zIndex: 10 }}>
             <h1 style={{ color: "#ff4444", fontSize: "4rem", marginBottom: "30px" }}>DIED</h1>
             
             <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
               {/* Try Again Button */}
-              <div ref={tryAgainBtnRef} style={{ position: "relative", width: "240px", height: "70px", borderRadius: "14px", backgroundColor: "white", display: "flex", justifyContent: "center", alignItems: "center", fontSize: "22px", color: "black", overflow: "hidden", fontWeight: "bold" }}>
+              <div ref={tryAgainBtnRef} style={{ position: "relative", width: "240px", height: "70px", borderRadius: "0", backgroundColor: "white", display: "flex", justifyContent: "center", alignItems: "center", fontSize: "22px", color: "black", overflow: "hidden", fontWeight: "bold" }}>
                 <div ref={tryAgainFillRef} style={{ position: "absolute", top: 0, left: 0, height: "100%", width: "0%", backgroundColor: "rgba(0, 100, 255, 0.6)", zIndex: 0 }} />
                 <span style={{ position: "relative", zIndex: 1 }}>Try Again</span>
               </div>
 
               {/* Main Menu Button */}
-              <div ref={menuBtnRef} style={{ position: "relative", width: "240px", height: "70px", borderRadius: "14px", backgroundColor: "white", display: "flex", justifyContent: "center", alignItems: "center", fontSize: "22px", color: "black", overflow: "hidden", fontWeight: "bold" }}>
+              <div ref={menuBtnRef} style={{ position: "relative", width: "240px", height: "70px", borderRadius: "0", backgroundColor: "white", display: "flex", justifyContent: "center", alignItems: "center", fontSize: "22px", color: "black", overflow: "hidden", fontWeight: "bold" }}>
                 <div ref={menuFillRef} style={{ position: "absolute", top: 0, left: 0, height: "100%", width: "0%", backgroundColor: "rgba(255, 68, 68, 0.4)", zIndex: 0 }} />
                 <span style={{ position: "relative", zIndex: 1 }}>Main Menu</span>
               </div>
@@ -249,6 +249,8 @@ export default function Game() {
           </div>
         )}
       </div>
+
+      <h2 style={{color: "#4c4c4c"}}>Move 1 finger to control the character. Touch 2 fingers to shoot</h2>
 
       {isGameOver && <div ref={cursorRef} style={{ position: "fixed", left: 0, top: 0, pointerEvents: "none", zIndex: 999 }} />}
     </div>

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { HandLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 
-export default function OptionsMenu() {
+export default function CreditsMenu() {
   const [soundLevel, setSoundLevel] = useState(6);
   const [hovered, setHovered] = useState(null); // Keep for UI logic
 
@@ -127,7 +127,7 @@ export default function OptionsMenu() {
 
         if (elapsed >= holdDuration) {
           if (hoverType === 'back') window.location.href = "/";
-          if (hoverType === 'credits') window.location.href = "/credits";
+          if (hoverType === 'credits') alert("Credits: User");
           if (hoverType === 'block') setSoundLevel(parseInt(hoveredRef.current.split('-')[1]));
           holdStartRef.current = null;
         }
@@ -147,35 +147,16 @@ export default function OptionsMenu() {
   }, []);
 
   return (
-    <div className="options-container">
-      <h1 className="options-title">OPTIONS</h1>
+    <div className="credits-container">
+      <h1 className="credits-title">CREDITS</h1>
 
-      <div className="options-content">
-        <div className="sound-row">
-          <span className="sound-label">Sound</span>
-
-          <div className="sound-blocks">
-            {[...Array(10)].map((_, i) => (
-              <div
-                key={i}
-                ref={el => blockRefs.current[i] = el}
-                className={`sound-block ${i <= soundLevel ? "active" : ""}`}
-              >
-                <div
-                  ref={el => fillRefs.current[`block-${i}`] = el}
-                  className="block-fill"
-                />
-              </div>
-            ))}
-          </div>
+      <div className="credits-content">
+        <div className="credit-item">
+          Programmer - Alexander Buchkov
         </div>
 
-        <div
-          ref={el => buttonRefs.current[1] = el}
-          className="credits"
-        >
-          Credits
-          <div ref={el => fillRefs.current[1] = el} className="credits-fill" />
+        <div className="credit-item">
+          Designer - Emmanuel Olimpiev
         </div>
       </div>
 
