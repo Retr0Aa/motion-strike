@@ -4,6 +4,7 @@ import MainMenu from "./Page/MainMenu";
 import "./App.css";
 import OptionsMenu from "./Page/OptionsMenu";
 import CreditsMenu from "./Page/CreditsMenu";
+import SkinsMenu from "./Page/SkinsMenu";
 
 export default function App() {
     return (
@@ -13,6 +14,7 @@ export default function App() {
                 <Route path="/game" element={<Game />} />
                 <Route path="/options" element={<OptionsMenu />} />
                 <Route path="/credits" element={<CreditsMenu />} />
+                <Route path="/skins" element={<SkinsMenu />} />
             </Routes>
         </div>
     );

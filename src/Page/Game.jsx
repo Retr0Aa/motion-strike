@@ -5,39 +5,36 @@ export default function Game() {
   const [score, setScore] = useState(0);
   const [isGameOver, setIsGameOver] = useState(false);
 
+  // Refs for elements and UI
   const canvasRef = useRef(null);
+  const sliderRef = useRef(null);
   const cursorRef = useRef(null);
   
   // Button Refs
-  const tryAgainBtnRef = useRef(null);
-  const menuBtnRef = useRef(null);
-  const tryAgainFillRef = useRef(null);
-  const menuFillRef = useRef(null);
+  const retryBtnRef = useRef(null);
+  const retryFillRef = useRef(null);
+  const mainMenuBtnRef = useRef(null);
+  const mainMenuFillRef = useRef(null);
 
-  const mouse = useRef({ x: 0, y: 0 });
+  // Physics & Interaction Refs
   const targetFinger = useRef({ x: 0, y: 0 });
-  const smoothFinger = useRef({ x: 540, y: 310 });
-  
-  const currentCursor = useRef({ left: 0, top: 0, width: 24, height: 24, radius: 50 });
+  const smoothFinger = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+  const hoveredRef = useRef(null); 
   const holdStartRef = useRef(null);
-  const hoveredButton = useRef(null); // Tracks which button is being hovered
-  const holdDuration = 1500;
+  const holdDuration = 1500; 
 
+  // Game Logic Refs
   const cubesRef = useRef([]);
   const bulletsRef = useRef([]);
   const lastShotTime = useRef(0);
-  const gameRunning = useRef(true);
   const animationRef = useRef(null);
+  const gameRunning = useRef(true);
 
-  const restartGame = () => {
-    cubesRef.current = [];
-    bulletsRef.current = [];
-    setScore(0);
-    setIsGameOver(false);
-    gameRunning.current = true;
-    holdStartRef.current = null;
-    hoveredButton.current = null;
-  };
+  // Shooting Logic
+  const shootMeter = useRef(100);
+  const isHolding = useRef(false);
+  const isOverloaded = useRef(false);
+  const overloadDir = useRef(-1);
 
   useEffect(() => {
     let handLandmarker;
@@ -57,202 +54,257 @@ export default function Game() {
       });
 
       video = document.createElement("video");
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       video.srcObject = stream;
       await video.play();
 
       const lerp = (a, b, t) => a + (b - a) * t;
 
-      const mainLoop = () => {
+      const loop = () => {
         const now = performance.now();
-        const results = handLandmarker.detectForVideo(video, now);
+        const res = handLandmarker.detectForVideo(video, now);
 
-        if (results.landmarks?.length) {
-          const hand = results.landmarks[0];
-          const indexTip = hand[8];
-          const thumbTip = hand[4];
-
-          mouse.current = {
-            x: window.innerWidth - indexTip.x * window.innerWidth,
-            y: indexTip.y * window.innerHeight,
-          };
+        if (res.landmarks?.length) {
+          const hand = res.landmarks[0];
+          const i = hand[8]; // Index
+          const t = hand[4]; // Thumb
 
           targetFinger.current = {
-            x: 1080 - indexTip.x * 1080,
-            y: indexTip.y * 620,
+            x: window.innerWidth - i.x * window.innerWidth,
+            y: i.y * window.innerHeight,
           };
 
           if (gameRunning.current) {
-            const dist = Math.sqrt(Math.pow(indexTip.x - thumbTip.x, 2) + Math.pow(indexTip.y - thumbTip.y, 2));
-            if (dist < 0.05 && now - lastShotTime.current > 200) {
-              bulletsRef.current.push({ x: smoothFinger.current.x, y: smoothFinger.current.y, speed: 15 });
+            const dist = Math.hypot(i.x - t.x, i.y - t.y);
+            isHolding.current = (dist < 0.05 && !isOverloaded.current);
+            
+            if (isHolding.current && now - lastShotTime.current > 120) {
+              const rect = canvasRef.current.getBoundingClientRect();
+              bulletsRef.current.push({
+                x: ((smoothFinger.current.x - rect.left) / rect.width) * 1080,
+                y: ((smoothFinger.current.y - rect.top) / rect.height) * 620,
+                speed: 15,
+              });
               lastShotTime.current = now;
             }
           }
         }
 
-        if (canvasRef.current && gameRunning.current) {
-          const ctx = canvasRef.current.getContext("2d");
-          ctx.clearRect(0, 0, 1080, 620);
-          smoothFinger.current.x = lerp(smoothFinger.current.x, targetFinger.current.x, 0.2);
-          smoothFinger.current.y = lerp(smoothFinger.current.y, targetFinger.current.y, 0.2);
+        // --- SMOOTHING ---
+        smoothFinger.current.x = lerp(smoothFinger.current.x, targetFinger.current.x, 0.2);
+        smoothFinger.current.y = lerp(smoothFinger.current.y, targetFinger.current.y, 0.2);
 
-          bulletsRef.current.forEach((b, i) => {
-            b.y -= b.speed;
-            ctx.fillStyle = "#00ffcc";
-            ctx.fillRect(b.x - 2, b.y, 4, 15);
-            if (b.y < 0) bulletsRef.current.splice(i, 1);
-          });
-
-          cubesRef.current.forEach((c, i) => {
-            c.y += c.speed;
-            ctx.fillStyle = "red";
-            ctx.fillRect(c.x, c.y, c.size, c.size);
-
-            bulletsRef.current.forEach((b, bi) => {
-              if (b.x > c.x && b.x < c.x + c.size && b.y > c.y && b.y < c.y + c.size) {
-                setScore(s => s + 1);
-                cubesRef.current.splice(i, 1);
-                bulletsRef.current.splice(bi, 1);
-              }
-            });
-
-            const dx = Math.abs(smoothFinger.current.x - (c.x + c.size/2));
-            const dy = Math.abs(smoothFinger.current.y - (c.y + c.size/2));
-            if (dx < (c.size/2 + 15) && dy < (c.size/2 + 15)) {
-              gameRunning.current = false;
-              setIsGameOver(true);
-            }
-            if (c.y > 620) cubesRef.current.splice(i, 1);
-          });
-
-          ctx.fillStyle = "cyan";
-          ctx.beginPath();
-          ctx.arc(smoothFinger.current.x, smoothFinger.current.y, 18, 0, Math.PI * 2);
-          ctx.fill();
+        if (cursorRef.current) {
+          cursorRef.current.style.left = `${smoothFinger.current.x}px`;
+          cursorRef.current.style.top = `${smoothFinger.current.y}px`;
         }
 
-        if (isGameOver) handleMenuInteraction(lerp);
+        if (gameRunning.current) {
+            updateGameLogic();
+        } else {
+            handleMenuInteractions();
+        }
 
-        animationRef.current = requestAnimationFrame(mainLoop);
+        animationRef.current = requestAnimationFrame(loop);
       };
 
-      const spawnInterval = setInterval(() => {
-        if (gameRunning.current) {
-          cubesRef.current.push({
-            x: Math.random() * 1000 + 40,
-            y: -50,
-            size: 45,
-            speed: 3 + Math.random() * 2
+      const updateGameLogic = () => {
+        // Meter Logic
+        if (!isOverloaded.current) {
+          isHolding.current ? (shootMeter.current -= 0.5) : (shootMeter.current += 0.15);
+          if (shootMeter.current <= 0) { isOverloaded.current = true; overloadDir.current = -1; }
+        } else {
+          shootMeter.current += overloadDir.current * 0.5;
+          if (shootMeter.current <= 0) overloadDir.current = 1;
+          if (shootMeter.current >= 100) { shootMeter.current = 100; isOverloaded.current = false; }
+        }
+        shootMeter.current = Math.max(0, Math.min(100, shootMeter.current));
+
+        if (sliderRef.current) {
+          sliderRef.current.style.transform = `scaleX(${shootMeter.current / 100})`;
+          sliderRef.current.style.background = isOverloaded.current ? "red" : "#00ffcc";
+        }
+
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = 1080;
+        canvas.height = 620;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Bullets
+        bulletsRef.current.forEach((b, i) => {
+          b.y -= b.speed;
+          ctx.fillStyle = "#00ffcc";
+          ctx.fillRect(b.x - 2, b.y, 4, 15);
+          if (b.y < 0) bulletsRef.current.splice(i, 1);
+        });
+
+        // Cubes
+        cubesRef.current.forEach((c, i) => {
+          c.y += c.speed;
+          ctx.fillStyle = "red";
+          ctx.fillRect(c.x, c.y, c.size, c.size);
+
+          const pX = ((smoothFinger.current.x - rect.left) / rect.width) * 1080;
+          const pY = ((smoothFinger.current.y - rect.top) / rect.height) * 620;
+          const dist = Math.hypot(pX - (c.x + c.size / 2), pY - (c.y + c.size / 2));
+
+          if (dist < c.size / 2 + 18) {
+            setIsGameOver(true);
+            gameRunning.current = false;
+          }
+
+          bulletsRef.current.forEach((b, bi) => {
+            if (b.x > c.x && b.x < c.x + c.size && b.y > c.y && b.y < c.y + c.size) {
+              setScore((s) => s + 1);
+              cubesRef.current.splice(i, 1);
+              bulletsRef.current.splice(bi, 1);
+            }
           });
+        });
+
+        // Finger indicator on canvas
+        ctx.fillStyle = "cyan";
+        ctx.beginPath();
+        ctx.arc(((smoothFinger.current.x - rect.left) / rect.width) * 1080, ((smoothFinger.current.y - rect.top) / rect.height) * 620, 18, 0, Math.PI * 2);
+        ctx.fill();
+      };
+
+      const handleMenuInteractions = () => {
+        const buttons = [
+          { ref: retryBtnRef, fill: retryFillRef, action: () => window.location.reload() },
+          { ref: mainMenuBtnRef, fill: mainMenuFillRef, action: () => { window.location.href = "/"; } }
+        ];
+
+        let currentlyHovering = false;
+
+        buttons.forEach((btn) => {
+          if (!btn.ref.current) return;
+          const rect = btn.ref.current.getBoundingClientRect();
+          const isInside = (
+            smoothFinger.current.x >= rect.left &&
+            smoothFinger.current.x <= rect.right &&
+            smoothFinger.current.y >= rect.top &&
+            smoothFinger.current.y <= rect.bottom
+          );
+
+          if (isInside) {
+            currentlyHovering = true;
+            if (hoveredRef.current !== btn.ref) {
+              hoveredRef.current = btn.ref;
+              holdStartRef.current = Date.now();
+            }
+
+            const elapsed = Date.now() - holdStartRef.current;
+            const progress = Math.min(elapsed / holdDuration, 1);
+            if (btn.fill.current) btn.fill.current.style.width = `${progress * 100}%`;
+
+            if (elapsed >= holdDuration) btn.action();
+          } else {
+            if (btn.fill.current) btn.fill.current.style.width = "0%";
+          }
+        });
+
+        if (cursorRef.current) {
+          // 🔥 Hide cursor if hovering ANY button, show if not
+          cursorRef.current.style.opacity = currentlyHovering ? "0" : "1";
+        }
+
+        if (!currentlyHovering) {
+          hoveredRef.current = null;
+          holdStartRef.current = null;
+        }
+      };
+
+      const cubeInterval = setInterval(() => {
+        if (gameRunning.current) {
+          cubesRef.current.push({ x: Math.random() * 1000, y: -50, size: 45, speed: 3 });
         }
       }, 1000);
 
-      mainLoop();
-      return () => clearInterval(spawnInterval);
+      loop();
+      return () => clearInterval(cubeInterval);
     };
 
     setup();
     return () => cancelAnimationFrame(animationRef.current);
-  }, [isGameOver]);
+  }, []);
 
-  const handleMenuInteraction = (lerp) => {
-    if (!cursorRef.current) return;
+  // --- STYLES ---
+  const buttonStyle = {
+    position: "relative",
+    width: "220px",
+    height: "70px",
+    border: "2px solid white",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+    fontSize: "22px",
+    fontWeight: "bold",
+    color: "white",
+    transition: "transform 0.2s"
+  };
 
-    const mx = mouse.current.x;
-    const my = mouse.current.y;
-    
-    let targetStyle = { left: mx - 12, top: my - 12, width: 24, height: 24, radius: 50, color: "0, 255, 255" };
-    let currentlyOver = null;
-
-    // Check Try Again Button
-    const tryRect = tryAgainBtnRef.current?.getBoundingClientRect();
-    const menuRect = menuBtnRef.current?.getBoundingClientRect();
-
-    if (tryRect && mx >= tryRect.left && mx <= tryRect.right && my >= tryRect.top && my <= tryRect.bottom) {
-      targetStyle = { left: tryRect.left, top: tryRect.top, width: tryRect.width, height: tryRect.height, radius: 14, color: "0, 100, 255" };
-      currentlyOver = "tryAgain";
-    } else if (menuRect && mx >= menuRect.left && mx <= menuRect.right && my >= menuRect.top && my <= menuRect.bottom) {
-      targetStyle = { left: menuRect.left, top: menuRect.top, width: menuRect.width, height: menuRect.height, radius: 14, color: "255, 100, 0" };
-      currentlyOver = "menu";
-    }
-
-    // Progress Logic
-    if (currentlyOver) {
-      if (hoveredButton.current !== currentlyOver) {
-        holdStartRef.current = Date.now();
-        hoveredButton.current = currentlyOver;
-      }
-      
-      const elapsed = Date.now() - holdStartRef.current;
-      const progress = Math.min(elapsed / holdDuration, 1);
-
-      if (currentlyOver === "tryAgain" && tryAgainFillRef.current) {
-        tryAgainFillRef.current.style.width = `${progress * 100}%`;
-        if (menuFillRef.current) menuFillRef.current.style.width = "0%";
-      } else if (currentlyOver === "menu" && menuFillRef.current) {
-        menuFillRef.current.style.width = `${progress * 100}%`;
-        if (tryAgainFillRef.current) tryAgainFillRef.current.style.width = "0%";
-      }
-
-      if (elapsed >= holdDuration) {
-        if (currentlyOver === "tryAgain") restartGame();
-        else window.location.href = "/";
-      }
-    } else {
-      hoveredButton.current = null;
-      holdStartRef.current = null;
-      if (tryAgainFillRef.current) tryAgainFillRef.current.style.width = "0%";
-      if (menuFillRef.current) menuFillRef.current.style.width = "0%";
-    }
-
-    // Cursor Lerping
-    currentCursor.current.left = lerp(currentCursor.current.left, targetStyle.left, 0.2);
-    currentCursor.current.top = lerp(currentCursor.current.top, targetStyle.top, 0.2);
-    currentCursor.current.width = lerp(currentCursor.current.width, targetStyle.width, 0.2);
-    currentCursor.current.height = lerp(currentCursor.current.height, targetStyle.height, 0.2);
-    currentCursor.current.radius = lerp(currentCursor.current.radius, targetStyle.radius, 0.2);
-
-    const cur = cursorRef.current;
-    cur.style.left = currentCursor.current.left - 10 + "px";
-    cur.style.top = currentCursor.current.top - 10 + "px";
-    cur.style.width = currentCursor.current.width + 12 + "px";
-    cur.style.height = currentCursor.current.height + 12 + "px";
-    cur.style.borderRadius = currentCursor.current.radius + 7 + "px";
-    cur.style.border = `4px solid rgb(${targetStyle.color})`;
+  const fillStyle = {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    height: "100%",
+    width: "0%",
+    background: "rgba(255, 255, 255, 0.3)",
+    zIndex: -1
   };
 
   return (
-    <div style={{ textAlign: "center", background: "#031021", minHeight: "100vh", color: "white", cursor: "none", overflow: "hidden", fontFamily: "Arial" }}>
-      <h2 style={{ margin: 0, padding: "20px" }}>Score: {score}</h2>
+    <div style={{ background: "#031021", height: "100vh", width: "100vw", color: "white", overflow: "hidden", display: "flex", flexDirection: "column", alignItems: "center", fontFamily: "sans-serif" }}>
       
-      <div style={{ position: "relative", display: "inline-block" }}>
-        <canvas ref={canvasRef} width="1080" height="620" style={{ background: "#031021", borderRadius: 0, border: "6px solid #272e38", display: "block" }} />
-        
-        {isGameOver && (
-          <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0,0,0,0.85)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", borderRadius: 0, zIndex: 10 }}>
-            <h1 style={{ color: "#ff4444", fontSize: "4rem", marginBottom: "30px" }}>DIED</h1>
-            
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-              {/* Try Again Button */}
-              <div ref={tryAgainBtnRef} style={{ position: "relative", width: "240px", height: "70px", borderRadius: "0", backgroundColor: "white", display: "flex", justifyContent: "center", alignItems: "center", fontSize: "22px", color: "black", overflow: "hidden", fontWeight: "bold" }}>
-                <div ref={tryAgainFillRef} style={{ position: "absolute", top: 0, left: 0, height: "100%", width: "0%", backgroundColor: "rgba(0, 100, 255, 0.6)", zIndex: 0 }} />
-                <span style={{ position: "relative", zIndex: 1 }}>Try Again</span>
-              </div>
+      {/* 🔥 SOLID WHITE CURSOR (No Glow) */}
+      <div ref={cursorRef} style={{
+          position: "fixed", 
+          width: "20px", 
+          height: "20px", 
+          backgroundColor: "white", 
+          borderRadius: "50%", 
+          pointerEvents: "none", 
+          zIndex: 1001,
+          transform: "translate(-50%, -50%)",
+          display: isGameOver ? "block" : "none",
+          transition: "opacity 0.1s" 
+      }} />
 
-              {/* Main Menu Button */}
-              <div ref={menuBtnRef} style={{ position: "relative", width: "240px", height: "70px", borderRadius: "0", backgroundColor: "white", display: "flex", justifyContent: "center", alignItems: "center", fontSize: "22px", color: "black", overflow: "hidden", fontWeight: "bold" }}>
-                <div ref={menuFillRef} style={{ position: "absolute", top: 0, left: 0, height: "100%", width: "0%", backgroundColor: "rgba(255, 68, 68, 0.4)", zIndex: 0 }} />
-                <span style={{ position: "relative", zIndex: 1 }}>Main Menu</span>
-              </div>
-            </div>
-          </div>
-        )}
+      <div style={{ width: "95%", maxWidth: "1080px", display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "20px" }}>
+        <h2 style={{ margin: 0 }}>SCORE: {score}</h2>
+        <div style={{ width: "200px", height: "12px", background: "#111", border: "1px solid #444" }}>
+          <div ref={sliderRef} style={{ width: "100%", height: "100%", background: "#00ffcc", transformOrigin: "left" }} />
+        </div>
       </div>
 
-      <h2 style={{color: "#4c4c4c"}}>Move 1 finger to control the character. Touch 2 fingers to shoot</h2>
+      <canvas ref={canvasRef} style={{ width: "95vw", maxWidth: "1080px", height: "auto", aspectRatio: "1080 / 620", border: "4px solid #272e38", marginTop: "20px" }} />
 
-      {isGameOver && <div ref={cursorRef} style={{ position: "fixed", left: 0, top: 0, pointerEvents: "none", zIndex: 999 }} />}
+      {isGameOver && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(3,16,33,0.95)", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", zIndex: 999 }}>
+          <h1 style={{ fontSize: "80px", marginBottom: "10px" }}>GAME OVER</h1>
+          <h2 style={{ fontSize: "28px", marginBottom: "50px", opacity: 0.6 }}>SCORE: {score}</h2>
+
+          <div style={{ display: "flex", gap: "25px" }}>
+            <div ref={retryBtnRef} style={buttonStyle}>
+              <div ref={retryFillRef} style={fillStyle} />
+              RETRY
+            </div>
+
+            <div ref={mainMenuBtnRef} style={buttonStyle}>
+              <div ref={mainMenuFillRef} style={fillStyle} />
+              MENU
+            </div>
+          </div>
+          
+          <p style={{ marginTop: "40px", color: "#444", textTransform: "uppercase" }}>Hover to Confirm</p>
+        </div>
+      )}
     </div>
   );
 }

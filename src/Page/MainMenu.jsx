@@ -22,7 +22,7 @@ export default function MainMenu() {
   const buttons = [
     { text: "Options", action: () => window.location.href = "/options", id: "options" },
     { text: "Start Game", action: () => window.location.href = "/game", id: "start" },
-    { text: "Skins", action: () => alert("Skins"), id: "skins" },
+    { text: "Skins", action: () => window.location.href = "/skins", id: "skins" },
   ];
 
   useEffect(() => {
