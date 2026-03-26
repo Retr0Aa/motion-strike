@@ -9,7 +9,7 @@ export default function Game() {
   const canvasRef = useRef(null);
   const sliderRef = useRef(null);
   const cursorRef = useRef(null);
-  
+
   // Button Refs
   const retryBtnRef = useRef(null);
   const retryFillRef = useRef(null);
@@ -19,9 +19,9 @@ export default function Game() {
   // Physics & Interaction Refs
   const targetFinger = useRef({ x: 0, y: 0 });
   const smoothFinger = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
-  const hoveredRef = useRef(null); 
+  const hoveredRef = useRef(null);
   const holdStartRef = useRef(null);
-  const holdDuration = 1500; 
+  const holdDuration = 1500;
 
   // Game Logic Refs
   const cubesRef = useRef([]);
@@ -35,6 +35,14 @@ export default function Game() {
   const isHolding = useRef(false);
   const isOverloaded = useRef(false);
   const overloadDir = useRef(-1);
+
+  const playerImg = useRef(new Image());
+  const cubeImg = useRef(new Image());
+
+  useEffect(() => {
+    playerImg.current.src = "/player.png"; // put in public/
+    cubeImg.current.src = "/enemy.png";
+  }, []);
 
   useEffect(() => {
     let handLandmarker;
@@ -77,7 +85,7 @@ export default function Game() {
           if (gameRunning.current) {
             const dist = Math.hypot(i.x - t.x, i.y - t.y);
             isHolding.current = (dist < 0.05 && !isOverloaded.current);
-            
+
             if (isHolding.current && now - lastShotTime.current > 120) {
               const rect = canvasRef.current.getBoundingClientRect();
               bulletsRef.current.push({
@@ -100,9 +108,9 @@ export default function Game() {
         }
 
         if (gameRunning.current) {
-            updateGameLogic();
+          updateGameLogic();
         } else {
-            handleMenuInteractions();
+          handleMenuInteractions();
         }
 
         animationRef.current = requestAnimationFrame(loop);
@@ -146,7 +154,8 @@ export default function Game() {
         cubesRef.current.forEach((c, i) => {
           c.y += c.speed;
           ctx.fillStyle = "red";
-          ctx.fillRect(c.x, c.y, c.size, c.size);
+          //ctx.fillRect(c.x, c.y, c.size, c.size);
+          ctx.drawImage(cubeImg.current, c.x - 1.2, c.y - 1.2, c.size * 1.2, c.size * 1.2);
 
           const pX = ((smoothFinger.current.x - rect.left) / rect.width) * 1080;
           const pY = ((smoothFinger.current.y - rect.top) / rect.height) * 620;
@@ -167,10 +176,17 @@ export default function Game() {
         });
 
         // Finger indicator on canvas
-        ctx.fillStyle = "cyan";
-        ctx.beginPath();
-        ctx.arc(((smoothFinger.current.x - rect.left) / rect.width) * 1080, ((smoothFinger.current.y - rect.top) / rect.height) * 620, 18, 0, Math.PI * 2);
-        ctx.fill();
+        //ctx.fillStyle = "cyan";
+        //ctx.beginPath();
+        //ctx.arc(((smoothFinger.current.x - rect.left) / rect.width) * 1080, ((smoothFinger.current.y - rect.top) / rect.height) * 620, 18, 0, Math.PI * 2);
+        //ctx.fill();
+        ctx.drawImage(
+          playerImg.current,
+          ((smoothFinger.current.x - rect.left) / rect.width) * 1080 - 18,
+          ((smoothFinger.current.y - rect.top) / rect.height) * 620 - 18,
+          36 + 1.2,
+          36 + 1.2
+        );
       };
 
       const handleMenuInteractions = () => {
@@ -261,19 +277,19 @@ export default function Game() {
 
   return (
     <div style={{ background: "#031021", height: "100vh", width: "100vw", color: "white", overflow: "hidden", display: "flex", flexDirection: "column", alignItems: "center", fontFamily: "sans-serif" }}>
-      
+
       {/* 🔥 SOLID WHITE CURSOR (No Glow) */}
       <div ref={cursorRef} style={{
-          position: "fixed", 
-          width: "20px", 
-          height: "20px", 
-          backgroundColor: "white", 
-          borderRadius: "50%", 
-          pointerEvents: "none", 
-          zIndex: 1001,
-          transform: "translate(-50%, -50%)",
-          display: isGameOver ? "block" : "none",
-          transition: "opacity 0.1s" 
+        position: "fixed",
+        width: "20px",
+        height: "20px",
+        backgroundColor: "white",
+        borderRadius: "50%",
+        pointerEvents: "none",
+        zIndex: 1001,
+        transform: "translate(-50%, -50%)",
+        display: isGameOver ? "block" : "none",
+        transition: "opacity 0.1s"
       }} />
 
       <div style={{ width: "95%", maxWidth: "1080px", display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "20px" }}>
@@ -301,7 +317,7 @@ export default function Game() {
               MENU
             </div>
           </div>
-          
+
           <p style={{ marginTop: "40px", color: "#444", textTransform: "uppercase" }}>Hover to Confirm</p>
         </div>
       )}
