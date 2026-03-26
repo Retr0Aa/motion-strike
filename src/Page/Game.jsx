@@ -16,6 +16,9 @@ export default function Game() {
   const mainMenuBtnRef = useRef(null);
   const mainMenuFillRef = useRef(null);
 
+  // Audio Ref
+  const audioRef = useRef(null);
+
   // Physics & Interaction Refs
   const targetFinger = useRef({ x: 0, y: 0 });
   const smoothFinger = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
@@ -40,8 +43,38 @@ export default function Game() {
   const cubeImg = useRef(new Image());
 
   useEffect(() => {
-    playerImg.current.src = "/player.png"; // put in public/
+    playerImg.current.src =
+      localStorage.getItem("selectedSkin") || "/skins/skin1.png";
     cubeImg.current.src = "/enemy.png";
+  }, []);
+
+  // Background audio setup
+  useEffect(() => {
+    const audio = new Audio("/soundtrack.mp3");
+    audio.loop = true;
+    audio.volume = 0.5;
+    audioRef.current = audio;
+
+    // Autoplay may be blocked; attempt play and handle gracefully
+    const playAudio = () => {
+      audio.play().catch(() => {
+        // If blocked, retry on first user interaction
+        const retry = () => {
+          audio.play().catch(() => {});
+          window.removeEventListener("pointerdown", retry);
+          window.removeEventListener("keydown", retry);
+        };
+        window.addEventListener("pointerdown", retry);
+        window.addEventListener("keydown", retry);
+      });
+    };
+
+    playAudio();
+
+    return () => {
+      audio.pause();
+      audio.src = "";
+    };
   }, []);
 
   useEffect(() => {
@@ -154,7 +187,6 @@ export default function Game() {
         cubesRef.current.forEach((c, i) => {
           c.y += c.speed;
           ctx.fillStyle = "red";
-          //ctx.fillRect(c.x, c.y, c.size, c.size);
           ctx.drawImage(cubeImg.current, c.x - 1.2, c.y - 1.2, c.size * 1.2, c.size * 1.2);
 
           const pX = ((smoothFinger.current.x - rect.left) / rect.width) * 1080;
@@ -175,17 +207,12 @@ export default function Game() {
           });
         });
 
-        // Finger indicator on canvas
-        //ctx.fillStyle = "cyan";
-        //ctx.beginPath();
-        //ctx.arc(((smoothFinger.current.x - rect.left) / rect.width) * 1080, ((smoothFinger.current.y - rect.top) / rect.height) * 620, 18, 0, Math.PI * 2);
-        //ctx.fill();
         ctx.drawImage(
           playerImg.current,
           ((smoothFinger.current.x - rect.left) / rect.width) * 1080 - 18,
           ((smoothFinger.current.y - rect.top) / rect.height) * 620 - 18,
-          36 + 1.2,
-          36 + 1.2
+          36 + 12.4,
+          36 + 12.2
         );
       };
 
@@ -225,7 +252,6 @@ export default function Game() {
         });
 
         if (cursorRef.current) {
-          // 🔥 Hide cursor if hovering ANY button, show if not
           cursorRef.current.style.opacity = currentlyHovering ? "0" : "1";
         }
 

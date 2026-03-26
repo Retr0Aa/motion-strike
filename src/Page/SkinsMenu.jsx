@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { HandLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 
+const skins = [
+  "/skins/skin1.png",
+  "/skins/skin2.png"
+];
+
 export default function SkinsMenu() {
   const [soundLevel, setSoundLevel] = useState(6);
   const [hovered, setHovered] = useState(null); // Keep for UI logic
@@ -9,6 +14,10 @@ export default function SkinsMenu() {
   const blockRefs = useRef([]);
   const fillRefs = useRef([]); // For the specific fill elements
   const cursorRef = useRef(null);
+
+  const [selectedSkin, setSelectedSkin] = useState(
+    localStorage.getItem("selectedSkin") || skins[0]
+  );
 
   const mouse = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 100 });
   const current = useRef({ left: 0, top: 0 });
@@ -128,7 +137,13 @@ export default function SkinsMenu() {
         if (elapsed >= holdDuration) {
           if (hoverType === 'back') window.location.href = "/";
           if (hoverType === 'credits') window.location.href = "/credits";
-          if (hoverType === 'block') setSoundLevel(parseInt(hoveredRef.current.split('-')[1]));
+          if (hoverType === 'block') {
+            const index = parseInt(hoveredRef.current.split('-')[1]);
+            const skin = skins[index];
+
+            setSelectedSkin(skin);
+            localStorage.setItem("selectedSkin", skin);
+          }
           holdStartRef.current = null;
         }
       } else {
@@ -153,12 +168,24 @@ export default function SkinsMenu() {
       <div className="options-content">
         <div className="sound-row">
           <div className="skin-blocks sound-blocks">
-            {[...Array(6)].map((_, i) => (
+            {skins.map((skin, i) => (
               <div
                 key={i}
                 ref={el => blockRefs.current[i] = el}
-                className={`skin-block sound-block`}
+                className={`skin-block sound-block ${selectedSkin === skin ? "active" : ""}`}
               >
+                {/* IMAGE */}
+                <img
+                  src={skin}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    pointerEvents: "none"
+                  }}
+                />
+
+                {/* HOLD FILL */}
                 <div
                   ref={el => fillRefs.current[`block-${i}`] = el}
                   className="block-fill"
